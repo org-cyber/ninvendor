@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NIN Digital Slip</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #d9d9d9;
+  font-family: 'Roboto', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+  flex-direction: column;   /* ← new, to stack controls above the card */
+}
+
+/* ──── New control strip (hidden when printing) ──── */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  background: #fff;
+  padding: 12px 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.controls label {
+  font-weight: 600;
+  font-size: 16px;
+  color: #2ea043;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.controls input[type="text"] {
+  padding: 8px 12px;
+  border: 2px solid #cfd6db;
+  border-radius: 6px;
+  font-size: 16px;
+  width: 180px;
+  letter-spacing: 1px;
+  outline: none;
+}
+
+.controls input[type="text"]:focus {
+  border-color: #2ea043;
+}
+
+.controls button {
+  background: #2ea043;
+  border: none;
+  color: white;
+  padding: 8px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  height: auto;      /* override the default button height */
+  width: auto;
+}
+
+.controls button:hover {
+  opacity: 0.9;
+}
+
+.card-wrapper {
+  width: 100%;
+}
+
+/* ───────────────────────────────────────── */
+/* DIGITAL NIN CARD */
+/* ───────────────────────────────────────── */
+
+.nin-card {
+  position: relative;
+  width: 815px;
+  height: 460px;
+  background-color: #ffffff;
+  overflow: hidden;
+  
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+   
+  background-image: url('background.png');      /* ← new */
+  background-size: 100% 100%;              /* ← new – covers the whole card */
+  background-repeat: no-repeat; 
+}
+
+/* background pattern */
+
+/* giant NIN watermark */
+.watermark {
+  position: absolute;
+  top: -60px;
+  left: 80px;
+  font-size: 300px;
+  font-weight: 900;
+  color: rgba(123, 189, 89, 0.11);
+  letter-spacing: -18px;
+  z-index: 0;
+  user-select: none;
+}
+
+/* eagle watermark */
+.eagle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 0;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.eagle img {
+  width: 300px;
+  height: auto;
+  object-fit: contain;
+}
+
+.header {
+  position: absolute;
+  top: 30px;
+  left: 82px;
+  z-index: 2;
+}
+
+.header h1 {
+  font-size: 33px;
+  line-height: 1;
+  font-weight: 900;
+  color: #2ea043;
+  letter-spacing: -1px;
+}
+
+.header h2 {
+  margin-top: -2px;
+  font-size: 26px;
+  font-weight: 400;
+  color: #4c4c4c;
+  letter-spacing: 0.5px;
+}
+
+.photo-box {
+  position: absolute;
+  top: 102px;
+  left: 16px;
+  width: 163px;
+  height: 225px;
+  background: #cfd6db;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.photo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info {
+  position: absolute;
+  top: 110px;
+  left: 214px;
+  width: 340px;
+  z-index: 2;
+}
+
+.label {
+  color: #9b9686;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.value {
+  color: #000;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: 5px;
+  margin-bottom: 18px;
+}
+
+.flex-row {
+  display: flex;
+  gap: 70px;
+}
+
+.qr-wrapper {
+  position: absolute;
+  top: 30px;
+  right: 18px;
+  width: 205px;
+  z-index: 2;
+  text-align: center;
+}
+
+#qrcode {
+  width: 195px;
+  height: 195px;
+  background: white;
+  padding: 8px;
+  margin: 0 auto;
+}
+
+.qr-text {
+  margin-top: 10px;
+  font-size: 20px;
+  color: #9b9686;
+  letter-spacing: 4px;
+  transform: rotate(180deg);   
+}
+
+.country {
+  margin-top: -4px;
+  font-size: 26px;
+  font-weight: 900;
+  color: #000;
+}
+
+.issue-title {
+  margin-top: 4px;
+  font-size: 23px;
+  font-weight: 900;
+  color: #000;
+}
+
+.issue-date {
+  margin-top: 4px;
+  font-size: 20px;
+  letter-spacing: 5px;
+  color: #000;
+}
+
+.nin-section {
+  position: absolute;
+  bottom: 2px;
+  width: 100%;
+  text-align: center;
+  z-index: 2;
+  padding-top: 10px;
+}
+
+.nin-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #000;
+}
+
+.nin-number {
+  margin-top: 2px;
+  font-size: 58px;
+  font-weight: 400;
+  letter-spacing: 10px;
+  color: #000;
+}
+
+.diagonal-left,
+.diagonal-right {
+  position: absolute;
+  font-size: 18px;
+  color: rgba(114, 114, 114, 0.55);
+  letter-spacing: 4px;
+  z-index: 1;
+}
+
+.diagonal-left {
+  transform: rotate(-48deg);
+  left: -25px;
+  top: 310px;
+}
+
+.diagonal-right {
+  transform: rotate(32deg);
+  right: -20px;
+  top: 290px;
+}
+
+@media print {
+  @page { margin: 6mm; size: auto; } 
+  body {
+    background: white;
+    padding: 0;
+  }
+
+  .controls,          /* hide the control strip */
+  .demo-toggle,       /* old toggle (now part of .controls) */
+  button {
+    display: none;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════╡ CONTROL STRIP ╞═════════ -->
+<div class="controls">
+  <label>
+    <input type="checkbox" id="demoToggle" checked />
+    Demo Mode
+  </label>
+  <input type="text" id="ninInput" placeholder="Enter NIN" maxlength="11" />
+  <button id="lookupBtn">Lookup</button>
+</div>
+
+<div class="card-wrapper">
+
+  <div class="nin-card">
+
+    
+
+    <div class="eagle">
+  
+</div>
+
+    <div class="header">
+      <h1>FEDERAL REPUBLIC OF NIGERIA</h1>
+      <h2>DIGITAL NIN SLIP</h2>
+    </div>
+
+    <div class="photo-box">
+      <img id="photo" src="https://placehold.co/163x225/cfd6db/444444?text=PHOTO" alt="Photo">
+    </div>
+
+    <div class="info">
+
+      <div class="label">SURNAME/NOM</div>
+      <div class="value" id="surname">WOBO</div>
+
+      <div class="label">GIVEN NAMES/PRENOMS</div>
+      <div class="value" id="firstname">ACHINUHU, FRANCA</div>
+
+      <div class="flex-row">
+
+        <div>
+          <div class="label">DATE OF BIRTH</div>
+          <div class="value" id="dob">10 MAY 1986</div>
+        </div>
+
+        <div>
+          <div class="label">SEX/SEXE</div>
+          <div class="value" id="gender">F</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="qr-wrapper">
+      <div id="qrcode"></div>
+
+      <div class="qr-text" id="qrNin">51363125249</div>
+
+      <div class="country">NGA</div>
+
+      <div class="issue-title">ISSUE DATE</div>
+
+      <div class="issue-date" id="issueDate">29 APR 2026</div>
+    </div>
+
+    <div class="diagonal-left" id="diagLeft">5136 312 5249</div>
+    <div class="diagonal-right" id="diagRight">5136 312 5249</div>
+
+    <div class="nin-section">
+      <div class="nin-title">
+        National Identification Number (NIN)
+      </div>
+
+      <div class="nin-number" id="ninDisplay">
+        5136 312 5249
+      </div>
+    </div>
+
+  </div>
+
+  <img src="./Screenshot 2026-05-01 at 20.50.59.png"
+       style="display:block; width:815px; max-width:100%; margin: 20px auto 20px;"
+       alt="Screenshot below card">
+
+  <!-- ═══════ PRINT BUTTON ═══════ -->
+  <button onclick="window.print()" style="display: block; margin: 0 auto 20px; width: 815px; max-width: 100%;">
+    Print Digital Slip
+  </button>
+
+</div>
+
+<script>
+// ──────────────────────────────────────
+// Backend integration + demo toggle
+// ──────────────────────────────────────
+
+const $ = id => document.getElementById(id);
+
+// DOM elements
+const demoToggle = $('demoToggle');
+const ninInput   = $('ninInput');
+const lookupBtn  = $('lookupBtn');
+
+// Demo data
+const demoData = {
+  nin: '51363125249',
+  surname: 'WOBO',
+  firstname: 'ACHINUHU, FRANCA',
+  dob: '10 MAY 1986',
+  gender: 'F',
+  issueDate: '29 APR 2026',
+  photo: 'https://placehold.co/163x225/cfd6db/444444?text=PHOTO'
+};
+
+// ── Helpers ──────────────────────────────────────
+function formatNIN(nin) {
+  return nin.replace(/(\d{4})(\d{3})(\d{4})/, '$1 $2 $3');
+}
+
+function formatDateFromISO(str) {
+  // expects DD-MM-YYYY from server, returns 'DD MMM YYYY'
+  if (!str) return '';
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const parts = str.split('-');
+  if (parts.length === 3) {
+    const day = parts[0];
+    const month = months[parseInt(parts[1], 10) - 1];
+    const year = parts[2];
+    return `${day} ${month} ${year}`;
+  }
+  return str;
+}
+
+function getTodayFormatted() {
+  const now = new Date();
+  const months = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+// ── Populate card UI ──────────────────────────────
+function populateCard(data) {
+  // Handle photo: prefix base64 if needed
+  let photoSrc = data.photo || demoData.photo;
+  if (photoSrc && !photoSrc.startsWith('data:') && !photoSrc.startsWith('http')) {
+    photoSrc = 'data:image/jpeg;base64,' + photoSrc;
+  }
+
+  const formattedNin = formatNIN(data.nin);
+
+  // Combine firstname + middlename if available (server returns both)
+  let displayGiven = data.firstname;
+  if (data.middlename && data.middlename.trim()) {
+    displayGiven += ' ' + data.middlename.trim();
+  }
+  //displayGiven += ', ' + data.surname;
+
+  $('surname').textContent = data.surname.toUpperCase();
+  $('firstname').textContent = displayGiven.toUpperCase();
+  $('dob').textContent = data.dob || '';
+  $('gender').textContent = (data.gender || '').charAt(0).toUpperCase();
+  $('issueDate').textContent = data.issueDate || getTodayFormatted();
+  $('ninDisplay').textContent = formattedNin;
+  $('diagLeft').textContent = formattedNin;
+  $('diagRight').textContent = formattedNin;
+  $('qrNin').textContent = data.nin;
+  $('photo').src = photoSrc;
+
+  // QR code
+  const qrContainer = $('qrcode');
+  qrContainer.innerHTML = '';
+  new QRCode(qrContainer, {
+    text: data.nin,
+    width: 179,
+    height: 179,
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+// Initial load with demo data
+populateCard(demoData);
+
+// ── Lookup button handler ─────────────────────────
+lookupBtn.addEventListener('click', async () => {
+  const nin = ninInput.value.trim();
+
+  if (nin.length !== 11 || !/^\d{11}$/.test(nin)) {
+    alert('Please enter a valid 11-digit NIN.');
+    return;
+  }
+
+  // If demo mode is on, still use demo data (ignore lookup)
+  if (demoToggle.checked) {
+    populateCard(demoData);
+    return;
+  }
+
+  // Real lookup
+  lookupBtn.disabled = true;
+  lookupBtn.textContent = 'Looking up…';
+
+  try {
+    const res = await fetch('/api/lookup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nin, consent: true }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || 'Lookup failed. Please try again.');
+      return;
+    }
+
+    // Map server fields to card
+    const cardData = {
+      nin: nin,
+      surname: data.surname || '',
+      firstname: data.firstname || '',
+      middlename: data.middlename || '',
+      gender: data.gender || '',
+      dob: formatDateFromISO(data.birthdate),
+      issueDate: getTodayFormatted(),
+      photo: data.photo || '',
+    };
+
+    populateCard(cardData);
+
+  } catch (err) {
+    alert('Network error. Please check your connection and try again.');
+  } finally {
+    lookupBtn.disabled = false;
+    lookupBtn.textContent = 'Lookup';
+  }
+});
+
+// Allow Enter key in input
+ninInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') lookupBtn.click();
+});
+</script>
+
+</body>
+</html>

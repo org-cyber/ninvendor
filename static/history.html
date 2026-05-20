@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lookup History</title>
+<style>
+  :root { --green: #1e6e3c; --ink: #111410; --ink-light: #717870; --rule: #d4dbd6; --surface: #f8f9f7; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--surface); color: var(--ink); max-width: 900px; margin: 40px auto; padding: 0 20px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 24px; color: var(--green); text-decoration: none; font-weight: 600; font-size: 14px; }
+  h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 28px; margin-bottom: 6px; }
+  .subtitle { color: var(--ink-light); font-size: 13px; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--rule); font-size: 13.5px; }
+  th { background: var(--surface); color: var(--ink-light); text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.14em; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .empty { color: var(--ink-light); margin-top: 40px; text-align: center; padding: 40px; background: #fff; border: 1px solid var(--rule); border-radius: 10px; }
+  .badge { font-size: 10px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.06em; }
+  .badge-demo { background: #fffbeb; color: #92760a; border: 1px solid #e9d97a; }
+  .badge-live { background: #edf5f0; color: var(--green); border: 1px solid #c5d4c9; }
+  .clear-btn { margin-top: 20px; padding: 10px 18px; background: transparent; color: #c53030; border: 1.5px solid #fc8181; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .clear-btn:hover { background: #fff5f5; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <a class="back" href="/">← Back to Kiosk</a>
+  <h2>Lookup History</h2>
+  <p class="subtitle">Records are stored locally on this terminal only. Last 200 lookups.</p>
+  <div id="content"><p class="empty">Loading…</p></div>
+
+<script>
+const LICENSE_KEY = localStorage.getItem('ninKioskLicenseKey');
+const HISTORY_KEY = 'ninHistory_' + (LICENSE_KEY || 'local');
+
+function render() {
+  const raw = localStorage.getItem(HISTORY_KEY);
+  if (!raw) {
+    document.getElementById('content').innerHTML = '<p class="empty">No lookups yet.</p>';
+    return;
+  }
+  const history = JSON.parse(raw);
+  if (!history.length) {
+    document.getElementById('content').innerHTML = '<p class="empty">No lookups yet.</p>';
+    return;
+  }
+
+  const rows = history.map(r => `
+    <tr>
+      <td>${r.nin || '-'}</td>
+      <td>${r.fullname || '-'}</td>
+      <td>${r.phone || '-'}</td>
+      <td>${r.demo ? '<span class="badge badge-demo">Demo</span>' : '<span class="badge badge-live">Live</span>'}</td>
+      <td>${r.timestamp ? new Date(r.timestamp).toLocaleString() : '-'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('content').innerHTML = `
+    <table>
+      <thead>
+        <tr><th>NIN</th><th>Name</th><th>Phone</th><th>Type</th><th>Time</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <button class="clear-btn" onclick="clearHistory()">Clear Local History</button>
+  `;
+}
+
+function clearHistory() {
+  if (!confirm('Delete all local history from this terminal?')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

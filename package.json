@@ -1,0 +1,23 @@
+{
+  "name": "nin-kiosk-commercial",
+  "version": "1.0.0",
+  "description": "Multi-tenant NIN kiosk for cybercafés",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "tenant:create": "node scripts/create-tenant.js",
+    "keys:rotate": "node scripts/rotate-keys.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
