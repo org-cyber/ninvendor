@@ -34,7 +34,7 @@ app.use(express.static('static'));
 const PROVIDER_URL = 'https://ninbvnportal.com.ng/api/nin-verification';
 
 async function requireTenant(req, res, next) {
-  const licenseKey = req.headers['x-license-key'];
+  const licenseKey = (req.headers['x-license-key'] || '').trim();
   if (!licenseKey) return res.status(401).json({ error: 'License key required' });
 
   try {
@@ -59,7 +59,8 @@ async function requireTenant(req, res, next) {
 }
 
 app.post('/api/setup', async (req, res) => {
-  const { licenseKey, providerApiKey } = req.body;
+  const licenseKey = (req.body.licenseKey || '').trim();
+  const providerApiKey = (req.body.providerApiKey || '').trim();
   if (!licenseKey || !providerApiKey) {
     return res.status(400).json({ error: 'License key and provider API key required' });
   }
@@ -226,10 +227,13 @@ app.post('/api/bvn', requireTenant, async (req, res) => {
     });
 
     const data = await response.json();
-    if (!response.ok || data.status !== 'success') return res.status(400).json({ error: data.message || 'BVN verification failed' });
+    console.log('BVN provider raw response:', JSON.stringify(data));
+    if (!response.ok || data.status !== 'success') {
+      return res.status(400).json({ error: data.message || data.error || 'BVN verification failed', _providerStatus: response.status });
+    }
 
     const d = data.data;
-    if (!d) return res.status(500).json({ error: 'Unexpected response structure' });
+    if (!d) return res.status(500).json({ error: 'Unexpected response structure', _raw: data });
 
     const fullname = [d.firstname, d.middlename, d.lastname].filter(Boolean).join(' ').toUpperCase();
 

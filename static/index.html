@@ -1189,9 +1189,9 @@ body {
     <h2>Activate Kiosk</h2>
     <p class="setup-sub">Enter your license key and NIN Portal API key to activate this terminal. Your API key is encrypted and stored securely.</p>
     <input id="setupLicense" type="text" placeholder="License Key (e.g. CAFE-ABE-2026-XXXX)" />
-    <input id="setupProviderKey" type="text" placeholder="Your NIN Portal API Key" />
+    <input id="setupProviderKey" type="text" placeholder="Your NIN/BVN Portal API Key" />
     <button onclick="activate()">Activate Terminal</button>
-    <p class="setup-hint">Get your API key from <a href="https://ninbvnportal.com.ng" target="_blank">ninbvnportal.com.ng</a> after creating an account.</p>
+    <p class="setup-hint">Get your API key from <a href="https://ninbvnportal.com.ng" target="_blank">ninbvnportal.com.ng</a> after creating an account. The same key works for both NIN and BVN lookups.</p>
     <p style="margin-top:12px;font-size:12px;color:#666;text-align:center;">
   <a href="#" onclick="skipSetup()" style="color:#1e6e3c;text-decoration:none;font-weight:500;">Continue without activation →</a>
 </p>
@@ -1521,7 +1521,7 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 // ──────────────────────────────────────────────────────
 
 const $ = id => document.getElementById(id);
-let LICENSE_KEY = localStorage.getItem('ninKioskLicenseKey');
+let LICENSE_KEY = (localStorage.getItem('ninKioskLicenseKey') || '').trim() || null;
 let TENANT_DATA = null;
 let demoModeOn = true;
 let currentService = 'nin'; // 'nin' or 'bvn'
@@ -1562,8 +1562,8 @@ async function activate() {
     if (!r.ok) throw new Error(data.error || 'Activation failed');
 
     // Store key and dismiss modal immediately — works for first activation OR reactivation
-    LICENSE_KEY = key;
-    localStorage.setItem('ninKioskLicenseKey', key);
+    LICENSE_KEY = key.trim();
+    localStorage.setItem('ninKioskLicenseKey', key.trim());
     $('setupOverlay').style.display = 'none';
     await loadTenant();
   } catch (e) {
@@ -1575,7 +1575,19 @@ async function activate() {
 async function loadTenant() {
   try {
     const r = await fetch('/api/tenant', { headers: { 'x-license-key': LICENSE_KEY } });
-    if (!r.ok) throw new Error('Invalid or expired license');
+
+    // Only wipe the stored key when the server explicitly rejects it (auth failure)
+    if (r.status === 401 || r.status === 403) {
+      localStorage.removeItem('ninKioskLicenseKey');
+      LICENSE_KEY = null;
+      throw new Error('Invalid or expired license');
+    }
+
+    if (!r.ok) {
+      // Server error / network issue — do NOT clear the key, just surface the error
+      throw new Error('Server error — please retry');
+    }
+
     TENANT_DATA = await r.json();
 
     const cafeName = TENANT_DATA.cafeName || 'Dmiebi Ventures';
@@ -1604,8 +1616,8 @@ async function loadTenant() {
 
   } catch (e) {
     console.error('Tenant load failed:', e);
-    localStorage.removeItem('ninKioskLicenseKey');
-    LICENSE_KEY = null;
+    // Only clear the key if it was an auth error (already cleared above).
+    // For network/server errors, keep the key so the user doesn't lose their setup.
     throw e;
   }
 }
